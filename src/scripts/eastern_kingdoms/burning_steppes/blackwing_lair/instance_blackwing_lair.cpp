@@ -594,6 +594,10 @@ struct instance_blackwing_lair : public ScriptedInstance
     {
         switch (uiType)
         {
+        case DATA_SCEPTER_RUN_TIME:
+            m_auiData[DATA_SCEPTER_RUN_TIME] = uiData;
+            break;
+
         case TYPE_RAZORGORE:
             m_auiEncounter[TYPE_RAZORGORE] = uiData;
             if (uiData == IN_PROGRESS)
@@ -743,14 +747,23 @@ struct instance_blackwing_lair : public ScriptedInstance
                 m_auiData[DATA_EGG] = FAIL;
             }
             break;
+
+        case TYPE_SCEPTER_RUN:
+            m_auiEncounter[TYPE_SCEPTER_RUN] = uiData;
+            break;
         }
 
-        if (uiData == DONE)
+
+
+
+        if (uiData == DONE || TYPE_SCEPTER_RUN == uiType)
         {
             OUT_SAVE_INST_DATA;
 
             std::ostringstream saveStream;
-            saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " " << m_auiEncounter[3] << " " << m_auiEncounter[4] << " " << m_auiEncounter[5] << " " << m_auiEncounter[6] << " " << m_auiEncounter[7] << " " << m_auiEncounter[8] << " " << m_auiData[DATA_CHROM_BREATH] << " " << m_auiData[DATA_NEF_COLOR];
+            saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " " << m_auiEncounter[3] << " " << m_auiEncounter[4] << 
+            " " << m_auiEncounter[5] << " " << m_auiEncounter[6] << " " << m_auiEncounter[7] << " " << m_auiEncounter[8] << " " << m_auiData[DATA_CHROM_BREATH] << 
+            " " << m_auiData[DATA_NEF_COLOR] << " " << m_auiEncounter[9] << " " << m_auiData[DATA_SCEPTER_RUN_TIME];
 
             strInstData = saveStream.str();
 
@@ -783,11 +796,14 @@ struct instance_blackwing_lair : public ScriptedInstance
 
         std::istringstream loadStream(chrIn);
 
-        loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2] >> m_auiEncounter[3] >> m_auiEncounter[4] >> m_auiEncounter[5] >> m_auiEncounter[6] >> m_auiEncounter[7] >> m_auiEncounter[8] >> m_auiData[DATA_CHROM_BREATH] >> m_auiData[DATA_NEF_COLOR];
+        loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2] >> m_auiEncounter[3] >> 
+        m_auiEncounter[4] >> m_auiEncounter[5] >> m_auiEncounter[6] >> m_auiEncounter[7] >> m_auiEncounter[8] >> 
+        m_auiData[DATA_CHROM_BREATH] >> m_auiData[DATA_NEF_COLOR] >> m_auiEncounter[9] >> m_auiData[DATA_SCEPTER_RUN_TIME];
 
         for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
-            if (m_auiEncounter[i] == IN_PROGRESS)           // Do not load an encounter as "In Progress" - reset it instead.
-                m_auiEncounter[i] = NOT_STARTED;
+            if (TYPE_SCEPTER_RUN != i)
+                if (m_auiEncounter[i] == IN_PROGRESS)           // Do not load an encounter as "In Progress" - reset it instead.
+                    m_auiEncounter[i] = NOT_STARTED;
 
         OUT_LOAD_INST_DATA_COMPLETE;
     }
