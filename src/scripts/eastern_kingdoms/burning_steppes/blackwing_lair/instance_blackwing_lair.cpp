@@ -783,13 +783,11 @@ struct instance_blackwing_lair : public ScriptedInstance
     {
         ObjectGuid scepterChampion = m_auiData[DATA_SCEPTER_CHAMPION];
 
-        Creature* wef = instance->GetCreature(m_auiData[DATA_RAZORGORE_GUID]);
-
         // No scepter run attempted
         if (0 == scepterChampion)
             return false;
 
-        // If scepter run failed, give everyone a copy of "From the Desk of Lord Victor Nefarius"
+        // On scepter "alternate success", give everyone a copy of "From the Desk of Lord Victor Nefarius"
         if (CONDITION_SCEPTER_FAIL == instance_condition_id)
         {
             if (FAIL == m_auiEncounter[TYPE_SCEPTER_RUN])
