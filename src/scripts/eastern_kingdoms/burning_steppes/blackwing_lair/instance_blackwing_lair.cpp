@@ -131,7 +131,10 @@ enum
     MOB_LIEUR_SORT_AILE_NOIRE   = 12457,
     MOB_GARDE_WYRM_GRIFFEMORT   = 12460,
 
-    EMOTE_DESTROY_EGG           = -1469034
+    EMOTE_DESTROY_EGG           = -1469034,
+
+    CONDITION_SCEPTER_FAIL      = 1,
+    CONDITION_SCEPTER_WIN       = 2
 };
 
 struct blackwing_technicians_helper
@@ -751,25 +754,57 @@ struct instance_blackwing_lair : public ScriptedInstance
         case TYPE_SCEPTER_RUN:
             m_auiEncounter[TYPE_SCEPTER_RUN] = uiData;
             break;
+
+        case DATA_SCEPTER_CHAMPION:
+            m_auiData[DATA_SCEPTER_CHAMPION] = uiData;
+            break;
         }
 
 
 
 
-        if (uiData == DONE || TYPE_SCEPTER_RUN == uiType)
+        if (uiData == DONE || TYPE_SCEPTER_RUN == uiType || DATA_SCEPTER_CHAMPION == uiData)
         {
             OUT_SAVE_INST_DATA;
 
             std::ostringstream saveStream;
             saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " " << m_auiEncounter[3] << " " << m_auiEncounter[4] << 
             " " << m_auiEncounter[5] << " " << m_auiEncounter[6] << " " << m_auiEncounter[7] << " " << m_auiEncounter[8] << " " << m_auiData[DATA_CHROM_BREATH] << 
-            " " << m_auiData[DATA_NEF_COLOR] << " " << m_auiEncounter[9] << " " << m_auiData[DATA_SCEPTER_RUN_TIME];
+            " " << m_auiData[DATA_NEF_COLOR] << " " << m_auiEncounter[9] << " " << m_auiData[DATA_SCEPTER_RUN_TIME] << " " << m_auiData[DATA_SCEPTER_CHAMPION];
 
             strInstData = saveStream.str();
 
             SaveToDB();
             OUT_SAVE_INST_DATA_COMPLETE;
         }
+    }
+
+    bool CheckConditionCriteriaMeet(Player const* player, uint32 map_id, WorldObject const* source, uint32 instance_condition_id) const
+    {
+        ObjectGuid scepterChampion = m_auiData[DATA_SCEPTER_CHAMPION];
+
+        Creature* wef = instance->GetCreature(m_auiData[DATA_RAZORGORE_GUID]);
+
+        // No scepter run attempted
+        if (0 == scepterChampion)
+            return false;
+
+        // If scepter run failed, give everyone a copy of "From the Desk of Lord Victor Nefarius"
+        if (CONDITION_SCEPTER_FAIL == instance_condition_id)
+        {
+            if (FAIL == m_auiEncounter[TYPE_SCEPTER_RUN])
+                return true;
+        }
+
+        // A true champion. Reward only this one with the Red Scepter Shard
+        if (CONDITION_SCEPTER_WIN == instance_condition_id)
+        { 
+            if (DONE == m_auiEncounter[TYPE_SCEPTER_RUN] && player->GetGUID() == scepterChampion)
+                return true;
+        }
+
+        return false;
+
     }
 
     const char* Save()
@@ -798,7 +833,8 @@ struct instance_blackwing_lair : public ScriptedInstance
 
         loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2] >> m_auiEncounter[3] >> 
         m_auiEncounter[4] >> m_auiEncounter[5] >> m_auiEncounter[6] >> m_auiEncounter[7] >> m_auiEncounter[8] >> 
-        m_auiData[DATA_CHROM_BREATH] >> m_auiData[DATA_NEF_COLOR] >> m_auiEncounter[9] >> m_auiData[DATA_SCEPTER_RUN_TIME];
+        m_auiData[DATA_CHROM_BREATH] >> m_auiData[DATA_NEF_COLOR] >> m_auiEncounter[9] >> m_auiData[DATA_SCEPTER_RUN_TIME]
+        >> m_auiData[DATA_SCEPTER_CHAMPION];
 
         for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
             if (TYPE_SCEPTER_RUN != i)

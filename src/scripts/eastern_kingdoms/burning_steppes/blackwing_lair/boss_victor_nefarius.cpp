@@ -31,12 +31,13 @@ enum
 
     SAY_SCEPTER_RUN_START           = -1469031,
     SAY_SCEPTER_TAUNT_0             = -1469038,
-    SAY_SCEPTER_RUN_LAUGHTER        = -1469039,
     SAY_SCEPTER_TAUNT_1             = -1469040,
     SAY_SCEPTER_TAUNT_2             = -1469041,
     SAY_SCEPTER_TAUNT_3             = -1469042,
     SAY_SCEPTER_TAUNT_4             = -1469043,
     MAX_SCEPTER_TAUNTS              = 6,
+
+    SAY_SCEPTER_RUN_LAUGHTER        = -1469039,
 
     SAY_SCEPTER_FAIL_LAUGHTER       = -1469044,
     SAY_SCEPTER_FAIL                = -1469045,
@@ -70,7 +71,9 @@ enum
 
     GO_DRAKONID_BONES               = 179804,
 
-    NPC_NEFARIAN                    = 11583
+    NPC_NEFARIAN                    = 11583,
+
+    QUEST_NEFARIUS_CORRUPTION       = 8730
 };
 
 struct SpawnLocation
@@ -290,6 +293,24 @@ struct boss_victor_nefariusAI : ScriptedAI
         // Despawn self when Nefarian is killed
         if (pSummoned->GetEntry() == NPC_NEFARIAN)
         {
+            if (nullptr == m_pInstance)
+                return;
+
+            uint32 scepterRunResult = FAIL;
+
+            // Check for successful Scepter Shard Run
+            if (scepterRun)
+            {
+                // Check if still has time left
+                if (Player* champion = m_creature->GetMap()->GetPlayer(m_pInstance->GetData64(DATA_SCEPTER_CHAMPION)))
+                    if (champion->GetQuestStatus(QUEST_NEFARIUS_CORRUPTION) == QUEST_STATUS_INCOMPLETE)
+                        scepterRunResult = DONE;
+                
+            }
+
+            m_pInstance->SetData(TYPE_SCEPTER_RUN, scepterRunResult);
+
+
             m_creature->SetRespawnDelay(7 * DAY);
             m_creature->ForcedDespawn();
         }
@@ -545,9 +566,6 @@ struct boss_victor_nefariusAI : ScriptedAI
         if (!m_pInstance)
             return;
 
-        scepterRunTime -= uiDiff;
-        m_pInstance->SetData(DATA_SCEPTER_RUN_TIME, scepterRunTime);
-
         if (nextScepterTauntTime <= uiDiff)
         {
             switch (scepterTauntID)
@@ -584,7 +602,11 @@ struct boss_victor_nefariusAI : ScriptedAI
 
         if (scepterRunTime <= uiDiff)
             FailScepterRun();
+        else
+            scepterRunTime -= uiDiff;
 
+
+        m_pInstance->SetData(DATA_SCEPTER_RUN_TIME, scepterRunTime);
     }
 
     void FailScepterRun()
